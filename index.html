@@ -4,19 +4,25 @@
   <meta charset="UTF-8">
   <title>貪吃小鼠</title>
   <style>
-    body {
+    body, html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
       background: #111;
       color: white;
       font-family: sans-serif;
-      text-align: center;
-      margin-top: 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
+
     canvas {
       background: #222;
       border: 2px solid white;
-      margin-top: 20px;
-      display: none;
+      display: block;
     }
+
     button {
       font-size: 18px;
       padding: 10px 20px;
@@ -25,10 +31,13 @@
       border-radius: 5px;
       color: white;
       cursor: pointer;
+      margin-bottom: 20px;
     }
+
     button:hover {
       background: deeppink;
     }
+
     .score {
       font-size: 20px;
       margin-top: 20px;
@@ -38,7 +47,7 @@
 <body>
   <h1>💗🐹貪吃小鼠🐹💗</h1>
   <button id="start">開始遊戲</button>
-  <canvas id="game" width="400" height="400"></canvas>
+  <canvas id="game"></canvas>
   <p>使用 ↑ ↓ ← → 控制蛇</p>
   <p class="score">分數: <span id="score">0</span> 分</p>
 
@@ -47,30 +56,40 @@
     const ctx = canvas.getContext("2d");
     const startBtn = document.getElementById("start");
     const scoreDisplay = document.getElementById("score");
-    const gridSize = 20;
-    const tileCount = canvas.width / gridSize;
 
+    let gridSize = 20; // 每個格子的大小
+    let tileCountX, tileCountY; // 計算水平和垂直的格子數量
     let snake, dx, dy, food, timer;
-    let score = 0; // ✅ 初始化分數
+    let score = 0;
     let foodType = '';
 
+    // 初始化並開始遊戲
     startBtn.addEventListener("click", () => {
       canvas.style.display = "block";
       startBtn.style.display = "none";
+      resizeCanvas();
       startGame();
     });
 
+    // 根據視窗大小調整遊戲畫布
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      tileCountX = Math.floor(canvas.width / gridSize);
+      tileCountY = Math.floor(canvas.height / gridSize);
+    }
+
     function startGame() {
       // 重設遊戲狀態
-      snake = [{ x: 10, y: 10}];
+      snake = [{ x: Math.floor(tileCountX / 2), y: Math.floor(tileCountY / 2) }];
       dx = 1;
       dy = 0;
-      score = 0; // ✅ 重新開始遊戲時分數為 0
-      scoreDisplay.textContent = score; // 更新分數顯示
+      score = 0;
+      scoreDisplay.textContent = score;
       food = randomFood();
       foodType = food.type;
       clearInterval(timer);
-      timer = setInterval(update, 200); // 設定更新速度
+      timer = setInterval(update, 100); // 設定更新速度
     }
 
     function update() {
@@ -78,12 +97,12 @@
 
       // 檢查是否碰到牆壁或自己
       if (
-        head.x < 0 || head.x >= tileCount ||
-        head.y < 0 || head.y >= tileCount ||
+        head.x < 0 || head.x >= tileCountX ||
+        head.y < 0 || head.y >= tileCountY ||
         snake.some(s => s.x === head.x && s.y === head.y)
       ) {
         clearInterval(timer);
-        alert("☠ 遊戲結束！!! 分數: " + score);
+        alert("☠ 遊戲結束！分數: " + score);
         startBtn.textContent = "再試一次";
         startBtn.style.display = "inline-block";
         return;
@@ -94,7 +113,7 @@
       // 吃到食物
       if (head.x === food.x && head.y === food.y) {
         score += getFoodScore(foodType);
-        scoreDisplay.textContent = score; // 更新分數顯示
+        scoreDisplay.textContent = score;
         food = randomFood(); // 生成新的食物
         foodType = food.type;
       } else {
@@ -114,8 +133,8 @@
         cumulativeProbability += probabilities[i];
         if (rand <= cumulativeProbability) {
           return {
-            x: Math.floor(Math.random() * tileCount),
-            y: Math.floor(Math.random() * tileCount),
+            x: Math.floor(Math.random() * tileCountX),
+            y: Math.floor(Math.random() * tileCountY),
             type: types[i]
           };
         }
@@ -164,6 +183,9 @@
       else if (e.key === "ArrowLeft" && dx === 0) { dx = -1; dy = 0; }
       else if (e.key === "ArrowRight" && dx === 0) { dx = 1; dy = 0; }
     });
+
+    window.addEventListener('resize', resizeCanvas); // 當視窗大小改變時重新調整畫布
+
   </script>
 </body>
 </html>
