@@ -1,12 +1,50 @@
-body {
-  background-color: #222;
-  color: #fff;
-  font-family: 'Arial', sans-serif;
+/* 使頁面充滿整個視窗並居中顯示 */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #111;
+  color: white;
+  font-family: sans-serif;
   text-align: center;
-  margin-top: 50px;
 }
 
+h1 {
+  font-size: 2rem;
+  color: hotpink;
+  margin-bottom: 10px;
+}
+
+button {
+  font-size: 18px;
+  padding: 10px 20px;
+  background: hotpink;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: deeppink;
+}
+
+/* 讓 canvas 元素充滿整個視窗 */
 canvas {
-  background-color: #000;
-  border: 2px solid #fff;
+  background-color: #222;
+  display: block;
+  margin-top: 20px;
+  border: 2px solid white;
+  width: 100%;
+  height: 100%;
+}
+
+/* 分數顯示 */
+.score {
+  font-size: 20px;
+  margin-top: 20px;
 }
