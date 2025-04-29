@@ -1,129 +1,126 @@
-<canvas id="gameCanvas" width="400" height="400"></canvas>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const startBtn = document.getElementById("start");
+const scoreDisplay = document.getElementById("score");
 
-<script>
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
+// 讓 canvas 根據視窗大小調整
+function resizeCanvas() {
+  canvas.width = window.innerWidth * 0.8; // 80% 螢幕寬度
+  canvas.height = window.innerHeight * 0.8; // 80% 螢幕高度
+}
 
-  const gridSize = 20;
-  const tileCount = canvas.width / gridSize;
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas(); // 初始調整
 
-  let snake = [{ x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) }]; // 蛇從中間開始
-  let dx = 1;
-  let dy = 0;
-  let food = randomPosition();
-  let gameOver = false;
-  let score = 0;
-  let speed = 150;
-  let timer = null;
+const gridSize = 20;
+const tileCountX = Math.floor(canvas.width / gridSize);
+const tileCountY = Math.floor(canvas.height / gridSize);
 
-  function startGame() {
-    clearTimeout(timer);
-    gameOver = false;
-    score = 0;
-    snake = [{ x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) }]; // 重設蛇的位置
-    timer = setTimeout(gameLoop, speed);
+let snake, dx, dy, food, timer;
+let score = 0;
+let foodType = '';
+
+startBtn.addEventListener("click", () => {
+  canvas.style.display = "block";
+  startBtn.style.display = "none";
+  startGame();
+});
+
+function startGame() {
+  snake = [{ x: Math.floor(tileCountX / 2), y: Math.floor(tileCountY / 2) }];
+  dx = 1;
+  dy = 0;
+  score = 0;
+  scoreDisplay.textContent = score;
+  food = randomFood();
+  foodType = food.type;
+  clearInterval(timer);
+  timer = setInterval(update, 200);
+}
+
+function update() {
+  const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+  if (
+    head.x < 0 || head.x >= tileCountX ||
+    head.y < 0 || head.y >= tileCountY ||
+    snake.some(s => s.x === head.x && s.y === head.y)
+  ) {
+    clearInterval(timer);
+    alert("☠ 遊戲結束！!! 分數: " + score);
+    startBtn.textContent = "再試一次";
+    startBtn.style.display = "inline-block";
+    return;
   }
 
-  function gameLoop() {
-    if (gameOver) return;
+  snake.unshift(head);
 
-    moveSnake();
-
-    if (checkCollision()) {
-      alert("遊戲結束！分數：" + score);
-      gameOver = true;
-      return;
-    }
-
-    if (eatFood()) {
-      snake.push({});
-      food = randomPosition();
-      score += 1;
-    }
-
-    drawGame();
-    timer = setTimeout(gameLoop, speed);
-  }
-
-  function moveSnake() {
-    const head = { x: snake[0].x + dx, y: snake[0].y + dy };
-    snake.unshift(head);
+  if (head.x === food.x && head.y === food.y) {
+    score += getFoodScore(foodType);
+    scoreDisplay.textContent = score;
+    food = randomFood();
+    foodType = food.type;
+  } else {
     snake.pop();
   }
 
-  function checkCollision() {
-    const head = snake[0];
-    if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
-      return true;
+  draw();
+}
+
+function randomFood() {
+  const types = ['🍩', '🍨', '🍰', '🍓'];
+  const probabilities = [0.35, 0.30, 0.20, 0.15];
+  let rand = Math.random();
+  let cumulativeProbability = 0;
+
+  for (let i = 0; i < types.length; i++) {
+    cumulativeProbability += probabilities[i];
+    if (rand <= cumulativeProbability) {
+      return {
+        x: Math.floor(Math.random() * tileCountX),
+        y: Math.floor(Math.random() * tileCountY),
+        type: types[i]
+      };
     }
-    for (let i = 1; i < snake.length; i++) {
-      if (head.x === snake[i].x && head.y === snake[i].y) return true;
-    }
-    return false;
   }
 
-  function eatFood() {
-    const head = snake[0];
-    return head.x === food.x && head.y === food.y;
+  return { x: 10, y: 10, type: '🍩' };
+}
+
+function getFoodScore(type) {
+  switch (type) {
+    case '🍩': return 3;
+    case '🍨': return 5;
+    case '🍰': return 7;
+    case '🍓': return 15;
+    default: return 0;
+  }
+}
+
+function draw() {
+  ctx.fillStyle = "#222";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.font = `${gridSize - 2}px serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  for (let i = 0; i < snake.length; i++) {
+    ctx.fillStyle = i === 0 ? "white" : "hotpink";
+    ctx.fillText(i === 0 ? "🐹" : "💗",
+      snake[i].x * gridSize + gridSize / 2,
+      snake[i].y * gridSize + gridSize / 2);
   }
 
-  function randomPosition() {
-    return {
-      x: Math.floor(Math.random() * tileCount),
-      y: Math.floor(Math.random() * tileCount)
-    };
-  }
+  ctx.fillStyle = "red";
+  ctx.fillText(food.type,
+    food.x * gridSize + gridSize / 2,
+    food.y * gridSize + gridSize / 2);
+}
 
-  function drawGame() {
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // 畫蛇
-    ctx.fillStyle = 'lime';
-    for (let segment of snake) {
-      ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
-    }
-
-    // 畫食物
-    ctx.fillStyle = 'red';
-    ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
-
-    // 顯示分數（左上角）
-    ctx.fillStyle = 'white';
-    ctx.font = '20px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(`分數：${score}`, 10, 25);
-  }
-
-  document.addEventListener('keydown', e => {
-    switch (e.key) {
-      case 'ArrowUp':
-        if (dy === 0) { dx = 0; dy = -1; }
-        break;
-      case 'ArrowDown':
-        if (dy === 0) { dx = 0; dy = 1; }
-        break;
-      case 'ArrowLeft':
-        if (dx === 0) { dx = -1; dy = 0; }
-        break;
-      case 'ArrowRight':
-        if (dx === 0) { dx = 1; dy = 0; }
-        break;
-      case 'Shift':
-        if (!gameOver && speed === 150) {
-          speed = 75; // 加速
-        }
-        break;
-    }
-  });
-
-  document.addEventListener('keyup', e => {
-    if (e.key === 'Shift') {
-      if (!gameOver && speed === 75) {
-        speed = 150; // 恢復正常速度
-      }
-    }
-  });
-
-  startGame();
-</script>
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -1; }
+  else if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = 1; }
+  else if (e.key === "ArrowLeft" && dx === 0) { dx = -1; dy = 0; }
+  else if (e.key === "ArrowRight" && dx === 0) { dx = 1; dy = 0; }
+});
